@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restauração VirtualPDV</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="shortcut icon" href="assets/favicon.png" type="image/x-icon" />
+    <!-- CSS importado aqui -->
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2 style="margin-top: 0">🔄 Restauração VirtualPDV</h2>
+
+      <div class="alerta">
+        <strong>⚠️ ATENÇÃO! IMPORTANTE!</strong><br /><br />
+        Se o banco "virtualpdv" já existir, ele será APAGADO e recriado do zero.
+        Todos os dados atuais serão perdidos de forma irreversível!
+      </div>
+
+      <!-- O formulário onde o usuário preenche os dados -->
+      <form id="formRestore">
+        <div class="campo">
+          <label>1. Selecione o usuário do banco:</label>
+          <div class="opcoes-usuario">
+            <input
+              type="radio"
+              id="desen"
+              name="usuario"
+              value="desen"
+              required
+            />
+            <label for="desen">Desen</label>
+
+            <input type="radio" id="expert" name="usuario" value="expert" />
+            <label for="expert">Expert</label>
+
+            <input type="radio" id="canal" name="usuario" value="canal" />
+            <label for="canal">Canal</label>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="senha">2. Senha do usuário:</label>
+          <input
+            type="password"
+            id="senha"
+            name="senha"
+            placeholder="Digite a senha do MySQL"
+            required
+          />
+        </div>
+
+        <div class="campo">
+          <label for="arquivoSql">3. Arquivo de Backup (.sql):</label>
+          <!-- O accept=".sql" já bloqueia arquivos de outras extensões no próprio navegador -->
+          <input
+            type="file"
+            id="arquivoSql"
+            name="arquivo"
+            accept=".sql"
+            required
+          />
+        </div>
+
+        <button type="submit">Iniciar Restauração</button>
+        <button
+          type="button"
+          id="btnDesligar"
+          style="background-color: #555; margin-top: 10px"
+        >
+          Desligar Sistema
+        </button>
+      </form>
+      <hr style="margin: 30px 0; border-top: 1px solid #ccc" />
+
+      <h3 style="color: #333; margin-top: 0">📤 Exportar Banco de Dados</h3>
+      <p style="font-size: 14px; color: #666; margin-bottom: 20px">
+        Gera um arquivo de backup seguro com todos os dados atuais.
+      </p>
+
+      <form id="formExport">
+        <div class="campo">
+          <label>1. Usuário do banco:</label>
+          <div class="opcoes-usuario">
+            <input
+              type="radio"
+              id="exp_desen"
+              name="usuario"
+              value="desen"
+              required
+            />
+            <label for="exp_desen">desen</label>
+
+            <input type="radio" id="exp_expert" name="usuario" value="expert" />
+            <label for="exp_expert">expert</label>
+
+            <input type="radio" id="exp_canal" name="usuario" value="canal" />
+            <label for="exp_canal">canal</label>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="exp_senha">2. Senha do usuário:</label>
+          <input
+            type="password"
+            id="exp_senha"
+            name="senha"
+            placeholder="Digite a senha do MySQL"
+            required
+          />
+        </div>
+
+        <button type="submit" style="background-color: #0066cc">
+          Gerar Arquivo de Backup
+        </button>
+      </form>
+    </div>
+
+    <!-- JavaScript importado aqui -->
+    <script src="/js/script.js"></script>
+  </body>
+</html>
