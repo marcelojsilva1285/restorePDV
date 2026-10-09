@@ -1,7 +1,5 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
 const multer = require('multer');
-const { google } = require('googleapis');
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 
@@ -94,10 +92,7 @@ app.post('/api/restore', upload.single('arquivo'), async (req, res) => {
 });
 
 // =========================================================
-// ROTA DE EXPORTAÇÃO (BACKUP DO BANCO)
-// =========================================================
-// =========================================================
-// ROTA DE EXPORTAÇÃO (BACKUP DIRETO PARA O DRIVE)
+// ROTA DE EXPORTAÇÃO (BACKUP LOCAL COM ABERTURA DE PASTA)
 // =========================================================
 app.post('/api/export', async (req, res) => {
     emOperacao = true; 
@@ -105,15 +100,23 @@ app.post('/api/export', async (req, res) => {
     const usuario = req.body.usuario.trim();
     const senha = req.body.senha.trim(); 
     
+    // --- NOVO LOCAL DE SALVAMENTO ---
+    const pastaDestino = 'C:\\Backups_PDV';
+    
+    // Se a pasta não existir no Windows do cliente, o Node.js cria automaticamente
+    if (!fs.existsSync(pastaDestino)) {
+        fs.mkdirSync(pastaDestino, { recursive: true });
+    }
+
     const dataFormatada = new Date().toISOString().replace(/[:.]/g, '-');
     const nomeArquivo = `backup_pdv_${dataFormatada}.sql`;
-    const caminhoDestino = path.join(__dirname, nomeArquivo);
-
-    // ID da pasta onde o robô vai guardar o ficheiro
-    const PASTA_DRIVE_ID = '1epVcrz-thBeRWkInmyXnSR5Ipn1IVDzE'; 
+    
+    // Agora o caminho final será C:\Backups_PDV\backup_pdv_data.sql
+    const caminhoDestino = path.join(pastaDestino, nomeArquivo);
+    // --------------------------------
 
     try {
-        console.log(`\n📦 [1/2] Iniciando extração do banco como '${usuario}'...`);
+        console.log(`\n📦 Iniciando extração do banco como '${usuario}'...`);
         
         // 1. Extrair o banco (mysqldump)
         const comandoDump = `"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump" -h 127.0.0.1 -u ${usuario} -p${senha} virtualpdv > "${caminhoDestino}"`;
@@ -125,46 +128,19 @@ app.post('/api/export', async (req, res) => {
             });
         });
 
-        console.log(`☁️ [2/2] Extração concluída. A enviar ficheiro para o Google Drive...`);
+        console.log(`✅ Backup gerado com sucesso localmente: ${nomeArquivo}`);
         
-        // 2. Configurar a autenticação do Robô
-        const auth = new google.auth.GoogleAuth({
-            keyFile: path.join(__dirname, 'credentials.json'),
-            scopes: ['https://www.googleapis.com/auth/drive.file'],
-        });
-        const drive = google.drive({ version: 'v3', auth });
-
-        // 3. Fazer o Upload
-        const metadadosFicheiro = {
-            name: nomeArquivo,
-            parents: [PASTA_DRIVE_ID]
-        };
-        const media = {
-            mimeType: 'application/sql',
-            body: fs.createReadStream(caminhoDestino)
-        };
-
-        await drive.files.create({
-            resource: metadadosFicheiro,
-            media: media,
-            fields: 'id'
-        });
-
-        console.log(`✅ Upload concluído com sucesso!`);
-        
-        // 4. Limpeza: Apagar o ficheiro .sql gigante do computador do cliente
-        if (fs.existsSync(caminhoDestino)) {
-            fs.unlinkSync(caminhoDestino);
-        }
+        // 2. MÁGICA: Abre o explorador de arquivos do Windows já com o backup selecionado
+        exec(`explorer.exe /select,"${caminhoDestino}"`);
         
         res.json({ 
             sucesso: true, 
-            mensagem: `Backup gerado e enviado com sucesso para a nuvem!\nNome: ${nomeArquivo}` 
+            mensagem: `Backup gerado com sucesso!\n\nArquivo salvo em:\n${caminhoDestino}\n\nA pasta do Windows foi aberta automaticamente para facilitar o envio.` 
         });
 
     } catch (erro) {
         console.error("❌ Erro:", erro.message);
-        // Se der erro, tenta limpar o ficheiro inacabado
+        // Limpa arquivo corrompido em caso de erro
         if (fs.existsSync(caminhoDestino)) fs.unlinkSync(caminhoDestino);
         
         res.json({ sucesso: false, mensagem: "Falha na operação: " + erro.message });
@@ -173,7 +149,9 @@ app.post('/api/export', async (req, res) => {
     }
 });
 
+// =========================================================
 // Rota para desligar o servidor
+// =========================================================
 app.post('/api/desligar', (req, res) => {
     res.json({ sucesso: true, mensagem: "Servidor desligado com sucesso. Você já pode fechar esta aba." });
     console.log("Encerrando o sistema...");
@@ -182,7 +160,7 @@ app.post('/api/desligar', (req, res) => {
 
 // --- LÓGICA DE DESLIGAMENTO AUTOMÁTICO (HEARTBEAT) ---
 let ultimoAcesso = Date.now();
-
+let emOperacao = false;
 // Rota que o navegador vai chamar a cada 3 segundos
 app.get('/api/ping', (req, res) => {
     ultimoAcesso = Date.now();
@@ -192,20 +170,18 @@ app.get('/api/ping', (req, res) => {
 // O servidor verifica a cada 3 segundos se a página ainda está aberta
 setInterval(() => {
     // Se passaram mais de 8 segundos sem o navegador dar "oi", desliga.
-    if (Date.now() - ultimoAcesso > 8000) {
+    if (!emOperacao && Date.now() - ultimoAcesso > 8000) {
         console.log("Navegador fechado. Desligando o servidor em segundo plano...");
         process.exit(0);
     }
 }, 3000);
 // -----------------------------------------------------
 
-
 app.listen(porta, () => {
     console.log(`🚀 Sistema Online rodando! Acesse: http://localhost:${porta}`);
     // Isso faz o Windows abrir o navegador padrão automaticamente
     exec(`start http://localhost:${porta}`);
 });
-
 
 /* 1. Criando um servidor com Node.js e Express
 
