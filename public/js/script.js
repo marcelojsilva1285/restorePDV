@@ -21,13 +21,31 @@ form.addEventListener("submit", async (event) => {
       method: "POST",
       body: formData,
     });
-
     // 5. Espera a resposta do servidor e lê o que ele disse
     const resultado = await resposta.json();
 
     if (resultado.sucesso) {
       alert("✅ SUCESSO!\n" + resultado.mensagem);
       form.reset(); // Limpa a tela para uma nova operação
+
+      // --- NOVO CÓDIGO: PERGUNTA PARA DESLIGAR ---
+            setTimeout(() => {
+                const desejaDesligar = confirm("Deseja desligar o servidor do sistema agora para encerrar as atividades?");
+                
+                if (desejaDesligar) {
+                    // Chama a rota de desligar
+                    fetch('/api/desligar', { method: 'POST' })
+                        .then(() => {
+                            // Aguarda 1.5s para o servidor cair e recarrega a página
+                            setTimeout(() => window.location.reload(true), 1500);
+                        })
+                        .catch(() => {
+                            // Se der erro de rede, o servidor já caiu. Força o recarregamento.
+                            window.location.reload(true);
+                        });
+                }
+            }, 500);
+            // -------------------------------------------
     } else {
       alert("❌ ERRO:\n" + resultado.mensagem);
     }
@@ -70,7 +88,7 @@ formExport.addEventListener("submit", async (event) => {
         senha: formData.get("senha")
     };
 
-    try {
+try {
         const resposta = await fetch("/api/export", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -82,6 +100,26 @@ formExport.addEventListener("submit", async (event) => {
         if (resultado.sucesso) {
             alert("✅ SUCESSO!\n" + resultado.mensagem);
             formExport.reset();
+
+            // --- NOVO CÓDIGO: PERGUNTA PARA DESLIGAR ---
+            setTimeout(() => {
+                const desejaDesligar = confirm("Deseja desligar o servidor do sistema agora para encerrar as atividades?");
+                
+                if (desejaDesligar) {
+                    // Chama a rota de desligar
+                    fetch('/api/desligar', { method: 'POST' })
+                        .then(() => {
+                            // Aguarda 1.5s para o servidor cair e recarrega a página
+                            setTimeout(() => window.location.reload(true), 1500);
+                        })
+                        .catch(() => {
+                            // Se der erro de rede, o servidor já caiu. Força o recarregamento.
+                            window.location.reload(true);
+                        });
+                }
+            }, 500);
+            // -------------------------------------------
+
         } else {
             alert("❌ ERRO:\n" + resultado.mensagem);
         }

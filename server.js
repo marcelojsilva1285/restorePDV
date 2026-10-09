@@ -145,6 +145,7 @@ app.post('/api/export', async (req, res) => {
         
         res.json({ sucesso: false, mensagem: "Falha na operação: " + erro.message });
     } finally {
+        ultimoAcesso = Date.now();
         emOperacao = false; 
     }
 });
